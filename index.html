@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Estación de Mapeo</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@500;600&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css?v=53">
+</head>
+<body>
+<div class="app">
+  <header class="top">
+    <div class="brand"><span class="mark" aria-hidden="true"></span>Estación de Mapeo</div>
+    <nav class="chips" id="chips" aria-label="Componentes"></nav>
+  </header>
+
+  <main class="stage">
+    <div id="gl" class="gl" aria-label="Torre de computador en 3D"></div>
+    <div id="labels" class="labels"></div>
+    <section class="intro">
+      <div class="intro-in">
+        <nav class="pcs" aria-label="Equipos">
+          <button class="pcbtn" type="button" data-pc="1"><span class="pcn">PC 1</span><span class="pca" aria-hidden="true">→</span></button>
+          <button class="pcbtn" type="button" data-pc="2" id="open"><span class="pcn">PC 2</span><span class="pca" aria-hidden="true">→</span></button>
+          <button class="pcbtn" type="button" data-pc="3"><span class="pcn">PC 3</span><span class="pca" aria-hidden="true">→</span></button>
+        </nav>
+        <p class="pcnote" id="pcnote" role="status"></p>
+      </div>
+    </section>
+
+    <section class="tower-cell" id="towerCell">
+      <div class="gl-fallback" id="glFail" hidden>Tu navegador no pudo iniciar WebGL, así que la torre 3D no se puede mostrar.</div>
+      <div class="tools" id="tools">
+        <button type="button" class="tool" id="btnExplode" aria-pressed="false">Vista explosionada</button>
+        <button type="button" class="tool" id="btnReset">Centrar cámara</button>
+      </div>
+    </section>
+
+    <aside class="panel" aria-live="polite">
+      <div class="panel-scroll" id="scroll"><div class="panel-in" id="panel"></div></div>
+    </aside>
+  </main>
+</div>
+<div id="tip" role="tooltip"></div>
+
+<script src="libs/three.min.js"></script>
+<script src="libs/OrbitControls.js"></script>
+<script src="libs/RGBELoader.js"></script>
+<script src="libs/Reflector.js"></script>
+<script src="libs/post.js"></script>
+<script src="libs/env-hdr.js"></script>
+<script src="libs/GLTFLoader.js"></script>
+<script src="libs/pc-model.js"></script>
+<script src="js/tower3d.js?v=53"></script>
+<script src="js/prices.js?v=53"></script>
+<script src="js/app.js?v=53"></script>
+</body>
+</html>
