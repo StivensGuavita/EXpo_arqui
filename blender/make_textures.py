@@ -94,16 +94,20 @@ for t, lab in [(1, 'NVMe 1 TB · PCIe 4.0'), (2, 'NVMe 2 TB · PCIe 5.0')]:
     text(ImageDraw.Draw(im), (256, 64), lab, 38, '#e6edf1', 'mm')
     save(im, 'nvme_%d.png' % t)
 
-# ---- HDD
-for t, cap in [(1, '4 TB'), (2, '8 TB')]:
-    im = Image.new('RGB', (512, 96), '#d9dfe3')
-    text(ImageDraw.Draw(im), (256, 48), 'HDD %s · 5400 RPM' % cap, 40, '#1a2228', 'mm')
+# ---- SSD SATA 2.5" (cara superior grande y borde)
+for t, cap in [(1, '2 TB'), (2, '4 TB')]:
+    im = Image.new('RGB', (512, 96), '#aab4bb')
+    text(ImageDraw.Draw(im), (256, 48), 'SSD SATA %s' % cap, 40, '#1a2228', 'mm')
     save(im, 'hdd_side_%d.png' % t)
-    im = Image.new('RGB', (256, 256), '#a9b4bc')
+    im = Image.new('RGB', (512, 358), '#1b2328')
     d = ImageDraw.Draw(im)
-    d.rectangle((24, 60, 232, 196), fill='#e4e9ec')
-    text(d, (128, 110), cap, 48, '#1a2228', 'mm')
-    text(d, (128, 160), 'SATA 6 Gb/s', 24, '#4a5760', 'mm', False)
+    for y in range(358):
+        c = int(30 + 22 * (1 - abs(y - 179) / 179))
+        d.line((0, y, 512, y), fill=(c, c + 6, c + 9))
+    d.rectangle((0, 0, 512, 14), fill='#3ddcc4')
+    text(d, (36, 120), 'SSD', 120, '#eef2f4', 'lm')
+    text(d, (40, 215), cap, 80, '#3ddcc4', 'lm')
+    text(d, (40, 290), 'SATA 6 Gb/s · 2.5"', 36, '#8fa1ad', 'lm', False)
     save(im, 'hdd_top_%d.png' % t)
 
 # ---- cara de la fuente

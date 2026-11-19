@@ -338,3 +338,15 @@ body.open .split{display:block}
 .split:hover::after,.split.on::after{opacity:1}
 .split:focus-visible{outline:none}
 @media (max-width:899px){.split{display:none!important}}
+
+.labels.ex .tg small{display:none}
+@media (max-width:899px){
+  .intro-in{padding:14px 14px 6px;max-width:none;width:100%}
+  .pcs{grid-template-columns:repeat(3,1fr);gap:8px;width:100%}
+  .pcbtn{padding:14px 10px;justify-content:center;gap:6px;font-size:1.15rem}
+  .pcbtn .pca{display:none}
+  .pcbtn:hover,.pcbtn:focus-visible{transform:none}
+  .pcnote{margin-top:8px;text-align:center}
+  .stage{min-height:0}
+  body:not(.open) .tower-cell{height:62vh;min-height:340px}
+}

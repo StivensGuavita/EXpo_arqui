@@ -527,14 +527,14 @@ def build_storage(t):
         plane_tex(g, 'nvme_etiqueta', (nx, ny, nz + dd - 0.08), w * 0.82, hh * 0.7, '+z', mat('nvme_%d' % t, '#ffffff', 0.5, 0.4, img='nvme_%d.png' % t))
         if t == 2:
             box(g, 'nvme_led', (nx, ny - hh / 2 + 0.35, nz + dd + 0.1), (w * 0.8, 0.18, 0.2), M_LED_ACC)
-    for i in range(t):
-        y, x, z = -12.2 + 1.3 + i * 2.85, 10.2, -2.9
-        box(g, 'hdd', (x, y, z), (14.7, 2.6, 10.2), M_HDD, faces={
-            '+y': mat('hdd_top_%d' % t, '#ffffff', 0.6, 0.4, img='hdd_top_%d.png' % t),
+    if t:
+        y, x, z = -12.2 + 0.4, 9.2, -2.9
+        box(g, 'hdd', (x, y, z), (10, 0.75, 7), M_HDD, 0.08, faces={
+            '+y': mat('hdd_top_%d' % t, '#ffffff', 0.45, 0.5, img='hdd_top_%d.png' % t),
             '+z': mat('hdd_side_%d' % t, '#ffffff', 0.4, 0.5, img='hdd_side_%d.png' % t)})
-        box(g, 'hdd_sata', (x - 7.9, y, z - 2), (0.9, 0.5, 3), M_BLACK)
-        for (px, pz) in ((-6.2, -4.2), (-6.2, 4.2), (6.2, -4.2), (6.2, 4.2)):
-            cyl(g, 'hdd_tornillo', (x + px, y + 1.34, z + pz), 0.28, 0.12, 'y', M_SCREW, 10)
+        box(g, 'hdd_sata', (x - 5.4, y, z - 1.2), (0.9, 0.4, 2.6), M_BLACK)
+        for (px, pz) in ((-4.3, -2.7), (-4.3, 2.7), (4.3, -2.7), (4.3, 2.7)):
+            cyl(g, 'hdd_tornillo', (x + px, y + 0.42, z + pz), 0.22, 0.1, 'y', M_SCREW, 10)
     return g
 
 

@@ -39,15 +39,15 @@ var PARTS=[
   {model:'32 GB DDR5-6000',lbl:'32 GB',price:170,specs:['2 × 16 GB','DDR5-6000','2 ranuras libres para ampliar'],m:[50,92,95],verdict:'Alcanza para mapeos medianos y deja ranuras libres para llegar a 64 GB.'},
   {model:'64 GB DDR5-6000',lbl:'64 GB',price:340,specs:['2 × 32 GB','DDR5-6000','Hasta 128 GB después'],m:[100,92,60],verdict:'Sobra para casi todo. Solo se justifica con proyectos de ciudades o miles de fotos de alta resolución.'}]},
 {id:'almacenamiento',n:'Almacenamiento',short:'Almacenamiento',
- role:'Guarda el sistema, los programas y los datos de cada vuelo. El SSD es rápido; el disco duro es barato y grande.',
- why:'Cada vuelo deja cientos de fotos y archivos LAS/LAZ de varios GB. Se trabaja sobre el NVMe, que carga datos en segundos, y se archiva en el disco duro. Una copia en la nube o en un NAS protege el trabajo.',
- tags:['NVMe PCIe','SSD','HDD','Respaldo','LAS/LAZ'],
- say:'“Trabajamos en SSD NVMe y archivamos en disco duro: velocidad donde se necesita y capacidad donde sale barato.”',
+ role:'Guarda el sistema, los programas y los datos de cada vuelo. Todo en SSD: rápido para trabajar y con capacidad para archivar.',
+ why:'Cada vuelo deja cientos de fotos y archivos LAS/LAZ de varios GB. Se trabaja sobre el NVMe, que carga datos en segundos, y se archiva en un SSD SATA de gran capacidad. Una copia en la nube o en un NAS protege el trabajo.',
+ tags:['NVMe PCIe','SSD SATA','Respaldo','LAS/LAZ'],
+ say:'“Todo el almacenamiento es SSD: el NVMe para trabajar a máxima velocidad y un SSD SATA grande para archivar los vuelos, sin partes móviles que se dañen.”',
  metrics:['Velocidad','Capacidad total','Ajuste a la empresa'],
  tiers:[
   {model:'SSD NVMe 512 GB',lbl:'512 GB',price:50,specs:['NVMe PCIe 3.0','≈ 3.500 MB/s','Sin disco de archivo'],m:[30,10,35],verdict:'Rápido pero pequeño: cada vuelo ocupa decenas de GB y se llena en semanas.'},
-  {model:'SSD NVMe 1 TB + HDD 4 TB',lbl:'1 TB + 4 TB',price:160,specs:['NVMe PCIe 4.0','≈ 7.000 MB/s','HDD de 4 TB para archivo'],m:[58,50,95],verdict:'NVMe para trabajar y HDD para archivar los vuelos. Es el esquema habitual.'},
-  {model:'SSD NVMe 2 TB + HDD 8 TB',lbl:'2 TB + 8 TB',price:380,specs:['NVMe PCIe 5.0','≈ 12.000 MB/s','HDD de 8 TB para archivo'],m:[100,100,55],verdict:'Más veloz y grande, pero casi no cambia el tiempo de proceso: el cuello está en CPU y GPU.'}]},
+  {model:'SSD NVMe 1 TB + SSD SATA 2 TB',lbl:'1 TB + 2 TB',price:200,specs:['NVMe PCIe 4.0','≈ 7.000 MB/s','SSD SATA de 2 TB para archivo'],m:[58,50,95],verdict:'NVMe para trabajar y SSD SATA para archivar los vuelos: todo rápido y sin partes móviles.'},
+  {model:'SSD NVMe 2 TB + SSD SATA 4 TB',lbl:'2 TB + 4 TB',price:450,specs:['NVMe PCIe 5.0','≈ 12.000 MB/s','SSD SATA de 4 TB para archivo'],m:[100,100,55],verdict:'Más veloz y grande, pero casi no cambia el tiempo de proceso: el cuello está en CPU y GPU.'}]},
 {id:'placa',n:'Placa madre',short:'Placa',
  role:'Conecta todos los componentes y reparte datos y energía entre ellos. Define cuánto se puede ampliar el equipo.',
  why:'Determina cuántos discos NVMe, módulos de RAM y puertos USB se pueden agregar: tarjetas SD de los drones, controles remotos, equipos de radar por red. Una buena placa evita cambiar todo el equipo en dos años.',
@@ -96,7 +96,7 @@ function loadPrices(){
       if(sv.src)SRC=sv.src;
       ORDER.forEach(function(id){
         if(sv.localCOP&&sv.localCOP[id])d.localCOP[id]=sv.localCOP[id];
-        if(sv.amazonUSD&&sv.amazonUSD[id])d.amazonUSD[id]=sv.amazonUSD[id];
+        if(sv.amazonUSD&&sv.amazonUSD[id]&&!(id==='almacenamiento'&&JSON.stringify(sv.amazonUSD[id])==='[50,160,380]'))d.amazonUSD[id]=sv.amazonUSD[id];
       });
     }
   }catch(e){}

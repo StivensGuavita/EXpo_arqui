@@ -12,7 +12,7 @@ window.PRICES_DEFAULT = {
     cpu:            [230, 330, 550],
     gpu:            [300, 430, 2300],
     ram:            [90, 170, 340],
-    almacenamiento: [50, 160, 380],
+    almacenamiento: [50, 200, 450],
     placa:          [100, 180, 450],
     fuente:         [60, 110, 220],
     refrigeracion:  [30, 45, 140]
