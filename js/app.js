@@ -84,13 +84,17 @@ var ORDER=PARTS.map(function(p){return p.id});
 var SEQ=['torre'].concat(ORDER,['resumen','precios']);
 var sel={};ORDER.forEach(function(id){sel[id]=1});
 var view='intro',opened=false,SRC='amazon';
+var PC2={id:2,brand:'Estación de Mapeo',company:'',noteTotal:'incluye chasis; sin monitor ni licencias',limLabel:'Proyecto cómodo',lim:null,extras:[{n:'Chasis ATX con flujo de aire',model:'Corsair 4000D RS ARGB Frame (torre ATX con frente de malla)',usd:93.28,cop:410000}],loads:null,parts:PARTS,prices:window.PRICES_DEFAULT,labels3d:null};
+var PC=PC2,PKEY='estacion-precios-v3',OLDKEY='estacion-precios-old';
 
 /* ---------- precios (Amazon y tienda local) ---------- */
 var PR=loadPrices();
-function loadPrices(){
-  var d=JSON.parse(JSON.stringify(window.PRICES_DEFAULT));
+function loadPrices(def,key,old){
+  def=def||window.PRICES_DEFAULT;key=key||'estacion-precios-v3';old=old||'estacion-precios-old';
+  var d=JSON.parse(JSON.stringify(def));
   try{
-    var sv=JSON.parse(localStorage.getItem('estacion-precios-v1')||'null');
+    var sv=JSON.parse(localStorage.getItem(key)||'null');
+    if(!sv){var o=JSON.parse(localStorage.getItem(old)||'null');if(o)sv={localCOP:o.localCOP,tienda:o.tienda,src:o.src}}
     if(sv){
       if(sv.trm>0)d.trm=sv.trm;if(sv.recargo>=0)d.recargo=sv.recargo;if(sv.tienda)d.tienda=sv.tienda;
       if(sv.src)SRC=sv.src;
@@ -103,7 +107,7 @@ function loadPrices(){
   return d;
 }
 function savePrices(){
-  try{localStorage.setItem('estacion-precios-v1',JSON.stringify({trm:PR.trm,recargo:PR.recargo,tienda:PR.tienda,src:SRC,localCOP:PR.localCOP,amazonUSD:PR.amazonUSD}))}catch(e){}
+  try{localStorage.setItem(PKEY,JSON.stringify({trm:PR.trm,recargo:PR.recargo,tienda:PR.tienda,src:SRC,localCOP:PR.localCOP,amazonUSD:PR.amazonUSD}))}catch(e){}
 }
 function cop(n){return '$ '+Math.round(n).toLocaleString('es-CO')}
 function copS(n){return n>=1e6?'$ '+(n/1e6).toFixed(2).replace('.',',')+' M':'$ '+Math.round(n/1000)+' mil'}
@@ -115,6 +119,10 @@ function pr(id,i,src){
   if(src==='local')return l!==null?l:a;
   return l!==null?Math.min(a,l):a;
 }
+function extraA(){var t=0;(PC.extras||[]).forEach(function(e){t+=Math.round(e.usd*PR.trm*(1+PR.recargo/100)/1000)*1000});return t}
+function extraL(){var t=0;(PC.extras||[]).forEach(function(e){t+=e.cop>0?e.cop:Math.round(e.usd*PR.trm*(1+PR.recargo/100)/1000)*1000});return t}
+function extraOne(e,src){src=src||SRC;var a=Math.round(e.usd*PR.trm*(1+PR.recargo/100)/1000)*1000,l=e.cop>0?e.cop:a;return src==='amazon'?a:src==='local'?l:Math.min(a,l)}
+function extraCost(src){src=src||SRC;var a=extraA(),l=extraL();return src==='amazon'?a:src==='local'?l:Math.min(a,l)}
 function srcName(){return SRC==='amazon'?'Amazon':SRC==='local'?PR.tienda:'La más barata'}
 function missingLocal(s){return ORDER.filter(function(id){return loc(id,s[id])===null}).length}
 function segHTML(){
@@ -129,6 +137,7 @@ var LOADS=[
  {t:'Datos de radar y telemetría',d:'Archivos que llegan por red, USB o tarjeta SD.',to:['placa','almacenamiento']},
  {t:'Trabajo continuo de muchas horas',d:'El equipo no puede apagarse ni bajar su velocidad.',to:['refrigeracion','fuente']}
 ];
+PC2.loads=LOADS;
 
 /* ---------- torre 3D ---------- */
 var T3=window.Tower3D,glOK=false,exploded=false;
@@ -150,10 +159,11 @@ function setExplode(on){
 function tierOf(id,s){return byId[id].tiers[(s||sel)[id]]}
 function calc(s,src){
   var t=function(id){return tierOf(id,s)},total=0;
-  PARTS.forEach(function(p){total+=pr(p.id,s[p.id],src)});
+  PARTS.forEach(function(p){total+=pr(p.id,s[p.id],src)});total+=extraCost(src);
   var perf=Math.round(.35*t('gpu').m[0]+.30*t('cpu').m[0]+.20*t('ram').m[0]+.15*t('almacenamiento').m[0]);
-  var lim=Math.min(t('ram').m[0],t('gpu').m[1]);
-  var limTxt=lim<=25?'Parcelas y lotes pequeños':lim<=50?'Fincas y obras medianas':'Ciudades y proyectos grandes';
+  var limTxt;
+  if(PC.lim){limTxt=PC.lim(t)}else{var lim=Math.min(t('ram').m[0],t('gpu').m[1]);
+  limTxt=lim<=25?'Parcelas y lotes pequeños':lim<=50?'Fincas y obras medianas':'Ciudades y proyectos grandes'}
   var w=[],trio=['cpu','gpu','ram'];
   var mn=Math.min.apply(null,trio.map(function(i){return s[i]})),mx=Math.max.apply(null,trio.map(function(i){return s[i]}));
   if(mx-mn>=2){
@@ -161,8 +171,8 @@ function calc(s,src){
     w.push({k:'warn',h:'Cuello de botella',t:'El nivel '+TIERS[mn].toLowerCase()+' de '+low+' frena a los componentes más potentes: lo invertido arriba no se aprovecha.'});
   }
   if(s.fuente<s.gpu)w.push({k:'warn',h:'Fuente insuficiente',t:'La fuente de '+t('fuente').lbl+' no alcanza para la GPU '+t('gpu').lbl+'. Puede apagarse con la GPU a plena carga.'});
-  if(s.cpu===2&&s.refrigeracion<2)w.push({k:'warn',h:'Riesgo de throttling',t:'Una CPU de 170 W necesita refrigeración líquida de 360 mm. Con este disipador bajará su frecuencia en cargas largas.'});
-  if(s.placa===0&&s.almacenamiento===2)w.push({k:'warn',h:'Disco subutilizado',t:'La placa A620 no tiene M.2 PCIe 5.0, así que el disco extremo trabaja a velocidad PCIe 4.0.'});
+  if(!PC.noThrottleWarn&&s.cpu===2&&s.refrigeracion<2)w.push({k:'warn',h:'Riesgo de throttling',t:'Una CPU de 170 W necesita refrigeración líquida de 360 mm. Con este disipador bajará su frecuencia en cargas largas.'});
+  if(PC.id===2&&s.placa===0&&s.almacenamiento===2)w.push({k:'warn',h:'Disco subutilizado',t:'La placa A620 no tiene M.2 PCIe 5.0, así que el disco extremo trabaja a velocidad PCIe 4.0.'});
   var n2=ORDER.filter(function(i){return s[i]===2}).length,n0=ORDER.filter(function(i){return s[i]===0}).length;
   if(n2>=3)w.push({k:'info',h:'Sobredimensionado',t:'Hay '+n2+' componentes en nivel extremo. Se paga rendimiento que este flujo de trabajo no aprovecha.'});
   if(n0>=3)w.push({k:'info',h:'Ahorro con riesgo',t:'Hay '+n0+' componentes básicos. Se ahorra hoy, pero los proyectos grandes irán lentos.'});
@@ -179,7 +189,7 @@ function tierCard(p,i){
   return '<div class="tier'+(on?' on':'')+(i===1?' rec':'')+'" role="radio" aria-checked="'+on+'" tabindex="0" data-tier="'+i+'">'+
    '<div class="t-top"><span class="chip-t">'+TIERS[i]+'</span>'+(on?'<span class="inuse">En la torre</span>':'')+'</div>'+
    '<h4 class="model">'+t.model+'</h4>'+
-   '<div class="price"><div class="pr2"><span class="s a">Amazon</span><b>'+cop(a)+'</b></div><div class="pr2"><span class="s l">Local</span><b>'+(l!==null?cop(l):'<em>sin dato</em>')+'</b></div><small>'+dt+'</small></div>'+
+   '<div class="price"><div class="pr2"><span class="s a">Amazon</span><b>'+(a>0?cop(a):'Incluido')+'</b></div><div class="pr2"><span class="s l">Local</span><b>'+(l!==null?cop(l):'<em>sin dato</em>')+'</b></div><small>'+dt+'</small></div>'+
    '<ul class="specs">'+t.specs.map(function(s){return '<li>'+s+'</li>'}).join('')+'</ul>'+
    '<div class="bars">'+p.metrics.map(function(m,k){return bar(m,t.m[k],k===2)}).join('')+'</div>'+
    '<p class="verdict">'+t.verdict+'</p></div>';
@@ -198,16 +208,16 @@ function pairChart(items){
   var mx=1;items.forEach(function(x){mx=Math.max(mx,x.a,x.l||0)});
   return '<div class="pairs"><div class="legend"><span><i class="a"></i>Amazon</span><span><i class="l"></i>'+PR.tienda+'</span></div>'+items.map(function(x){
     var dif='';
-    if(x.l!==null&&x.l!==undefined){var d=Math.round((x.l-x.a)/x.a*100);dif='<em class="'+(d<=0?'good':'bad')+'">'+(d<=0?'Local '+Math.abs(d)+' % más barata':'Local '+d+' % más cara')+'</em>'}
+    if(x.l!==null&&x.l!==undefined&&x.a>0){var d=Math.round((x.l-x.a)/x.a*100);dif='<em class="'+(d<=0?'good':'bad')+'">'+(d<=0?'Local '+Math.abs(d)+' % más barata':'Local '+d+' % más cara')+'</em>'}
     return '<div class="pgrp'+(x.on?' on':'')+'"><div class="pl"><b>'+x.label+'</b>'+dif+'</div>'+
       '<div class="pb"><span class="bar-a" style="--w:'+(x.a/mx*100).toFixed(1)+'%"></span><b>'+copS(x.a)+'</b></div>'+
       '<div class="pb">'+(x.l!==null&&x.l!==undefined?'<span class="bar-l" style="--w:'+(x.l/mx*100).toFixed(1)+'%"></span><b>'+copS(x.l)+'</b>':'<span class="bar-none">sin dato</span>')+'</div></div>'}).join('')+'</div>';
 }
 function totalsFor(k,src){var s={};ORDER.forEach(function(i){s[i]=k});return calc(s,src).total}
-function localTotal(k){var s=0;for(var i=0;i<ORDER.length;i++){var v=loc(ORDER[i],k);if(v===null)return null;s+=v}return s}
+function localTotal(k){var s=0;for(var i=0;i<ORDER.length;i++){var v=loc(ORDER[i],k);if(v===null)return null;s+=v}return s+extraL()}
 function chartsHTML(){
   var rows=ORDER.map(function(id){var i=sel[id];return {label:byId[id].short+' · '+TIERS[i],a:amz(id,i),l:loc(id,i)}});
-  var tot=[0,1,2].map(function(k){var a=0;ORDER.forEach(function(id){a+=amz(id,k)});return {label:'Todo '+TIERS[k].toLowerCase(),a:a,l:localTotal(k)}});
+  var tot=[0,1,2].map(function(k){var a=0;ORDER.forEach(function(id){a+=amz(id,k)});a+=extraA();return {label:'Todo '+TIERS[k].toLowerCase(),a:a,l:localTotal(k)}});
   return '<section><h3>Tu configuración, componente por componente</h3>'+pairChart(rows)+'</section>'+
     '<section><h3>Las tres configuraciones completas</h3>'+pairChart(tot)+'</section>';
 }
@@ -229,18 +239,18 @@ function renderPrecios(){
    '</section>'+
    '<div id="pcharts">'+chartsHTML()+'</div>'+
    '<section><h3>Precios por componente</h3><div class="ptable">'+rows+'</div>'+
-   '<p class="fine">Precios de Amazon estimados: verifícalos antes de exponer.</p></section>';
+   '<p class="fine">Precios de Amazon estimados: verifícalos antes de exponer.'+((PC.extras&&PC.extras.length)?' Incluido en los totales: '+PC.extras.map(function(e){return e.n+' (Amazon US$ '+e.usd+' · '+PR.tienda+' '+cop(e.cop)+')'}).join(' · ')+'.':'')+'</p></section>';
 }
 function refreshPrecios(){
   var c=$('#pcharts');if(c)c.innerHTML=chartsHTML();
   ORDER.forEach(function(id){[0,1,2].forEach(function(i){
     var k=id+'-'+i,a=amz(id,i),l=loc(id,i),ac=$('[data-acop="'+k+'"]'),df=$('[data-dif="'+k+'"]');
     if(ac)ac.textContent=cop(a);
-    if(df){if(l===null){df.textContent='—';df.className='cell'}else{var d=Math.round((l-a)/a*100);df.textContent=d<=0?'Local '+Math.abs(d)+' % más barata':'Local '+d+' % más cara';df.className='cell '+(d<=0?'good':'bad')}}
+    if(df){if(l===null||a<=0){df.textContent='—';df.className='cell'}else{var d=Math.round((l-a)/a*100);df.textContent=d<=0?'Local '+Math.abs(d)+' % más barata':'Local '+d+' % más cara';df.className='cell '+(d<=0?'good':'bad')}}
   })});
 }
 function renderOverview(){
-  return '<div class="p-head"><div class="eyebrow"><span>Vista general</span><span class="pn"><button class="nb" data-nav="1" aria-label="Siguiente">→</button></span></div>'+
+  return '<div class="p-head"><div class="eyebrow"><span>Vista general'+(PC.company?' · '+PC.company:'')+'</span><span class="pn"><button class="nb" data-nav="1" aria-label="Siguiente">→</button></span></div>'+
    '<h2>Por dentro de la torre</h2></div>'+
    '<section><h3>Qué le exige la empresa al computador</h3><ul class="loads">'+LOADS.map(function(l){
      return '<li><b>'+l.t+'</b><span>'+l.d+'</span><div class="to">'+l.to.map(function(i){return '<button data-go="'+i+'">'+byId[i].short+'</button>'}).join('')+'</div></li>'}).join('')+'</ul></section>'+
@@ -256,16 +266,16 @@ function renderSummary(){
   return '<div class="p-head"><div class="eyebrow"><span>Resumen</span><span class="pn"><button class="nb" data-nav="-1" aria-label="Anterior">←</button><button class="nb" data-nav="1" aria-label="Siguiente">→</button></span></div>'+
    '<h2>Tu configuración</h2><div style="margin-top:14px">'+segHTML()+'</div>'+(miss?'<p class="fine" style="margin-top:8px">Faltan '+miss+' precios de la tienda local en esta configuración: se usa el de Amazon en esos casos. Complétalos en la vista Precios.</p>':'')+'</div>'+
    '<section><div class="kpis">'+
-   '<div class="kpi"><small>Total · '+srcName()+'</small><b>'+cop(c.total)+'</b><em>sin caja, monitor ni licencias</em></div>'+
+   '<div class="kpi"><small>Total · '+srcName()+'</small><b'+(cop(c.total).length>12?' style="font-size:19px"':'')+'>'+cop(c.total)+'</b><em>'+PC.noteTotal+'</em></div>'+
    '<div class="kpi"><small>Rendimiento</small><b>'+c.perf+' / 100</b><em>'+cop(c.ppp)+' por punto</em></div>'+
-   '<div class="kpi"><small>Proyecto cómodo</small><b style="font-size:17px;line-height:1.3;margin-top:8px">'+c.lim+'</b><em>según RAM y VRAM</em></div></div></section>'+
+   '<div class="kpi"><small>'+PC.limLabel+'</small><b style="font-size:17px;line-height:1.3;margin-top:8px">'+c.lim+'</b><em>según RAM y VRAM</em></div></div></section>'+
    '<section><h3>Alertas</h3><div class="alerts">'+c.warn.map(function(a){return '<div class="alert '+a.k+'"><b>'+a.h+'</b><span>'+a.t+'</span></div>'}).join('')+'</div></section>'+
    '<section><h3>Tres configuraciones completas</h3><div class="presets">'+[0,1,2].map(function(k){var a=all[k];
      return '<button class="preset'+(cur===k?' on':'')+(k===1?' recp':'')+'" data-preset="'+k+'"><b>'+TIERS[k]+'</b>'+
      '<div class="pr-row"><span>Costo</span><span class="track"><i class="cost" style="--v:'+Math.round(a.total/maxT*100)+'"></i></span><b>'+copS(a.total)+'</b></div>'+
      '<div class="pr-row"><span>Rendimiento</span><span class="track"><i class="perf" style="--v:'+a.perf+'"></i></span><b>'+a.perf+'</b></div></button>'}).join('')+'</div></section>'+
    '<section><h3>Lo que hay en la torre</h3><div class="rows">'+PARTS.map(function(p){var t=tierOf(p.id);
-     return '<button class="row" data-go="'+p.id+'"><span>'+p.n+'</span><span>'+t.model+'</span><span class="chip-t">'+TIERS[sel[p.id]]+'</span><b>'+cop(pr(p.id,sel[p.id]))+'</b></button>'}).join('')+'</div></section>'+
+     return '<button class="row" data-go="'+p.id+'"><span>'+p.n+'</span><span>'+t.model+'</span><span class="chip-t">'+TIERS[sel[p.id]]+'</span><b>'+cop(pr(p.id,sel[p.id]))+'</b></button>'}).join('')+(PC.extras||[]).map(function(e){return '<div class="row"><span>'+e.n.split(' ')[0]+'</span><span>'+e.model+'</span><span class="chip-t">Fijo</span><b>'+cop(extraOne(e))+'</b></div>'}).join('')+'</div></section>'+
    '<p class="fine">Puntajes orientativos, solo para comparar niveles entre sí.</p>';
 }
 
@@ -316,13 +326,22 @@ function setTier(id,i){
   renderPanel(true);
 }
 
+function applyPC(n){
+  PC=n===3?window.PC3:n===1?window.PC1:PC2;PKEY=n===2?'estacion-precios-v3':'estacion-precios-pc'+n+'-v3';OLDKEY=n===2?'estacion-precios-old':'estacion-precios-pc'+n+'-old';
+  PARTS=PC.parts;byId={};PARTS.forEach(function(p){byId[p.id]=p});LOADS=PC.loads;
+  PR=loadPrices(PC.prices,PKEY,OLDKEY);
+  sel={};ORDER.forEach(function(id){sel[id]=1});
+  var b=$('.brand');if(b&&b.lastChild)b.lastChild.textContent=PC.brand;
+  document.title=PC.brand+(PC.company?' · '+PC.company:'');
+  if(glOK){T3.setPC(PC.labels3d);PARTS.forEach(function(p){T3.setLabel(p.id,p.n,tierOf(p.id).model)})}
+}
 /* ---------- navegación ---------- */
 var chips=$('#chips');
 chips.innerHTML=SEQ.map(function(id){
   var label=id==='torre'?'Torre':id==='resumen'?'Resumen':id==='precios'?'Precios':byId[id].short;
   return '<button class="chip" data-go="'+id+'" aria-current="false">'+label+(sel[id]!==undefined?lvlHTML(1):'')+'</button>';
 }).join('');
-$('#open').addEventListener('click',function(){openTower('torre')});
+$('#open').addEventListener('click',function(){applyPC(2);openTower('torre')});
 var noteT=0;
 Array.prototype.forEach.call(document.querySelectorAll('.pcbtn[data-pc]'),function(b){
   var n=+b.dataset.pc;
@@ -330,6 +349,7 @@ Array.prototype.forEach.call(document.querySelectorAll('.pcbtn[data-pc]'),functi
   b.addEventListener('pointerleave',function(){if(!glOK||opened)return;T3.nudge(0);T3.wake(false)})});
 Array.prototype.forEach.call(document.querySelectorAll('.pcbtn[data-pc]'),function(b){
   if(b.id==='open')return;
+  if(b.dataset.pc==='3'||b.dataset.pc==='1'){b.addEventListener('click',function(){applyPC(+b.dataset.pc);openTower('torre')});return}
   b.addEventListener('click',function(){var n=$('#pcnote');n.textContent='PC '+b.dataset.pc+' · todavía sin datos';clearTimeout(noteT);noteT=setTimeout(function(){n.textContent=''},3200)})});
 $('#btnExplode').addEventListener('click',function(){if(!opened)return;setExplode(!exploded);if(exploded&&ORDER.indexOf(view)>=0)go('torre')});
 $('#btnReset').addEventListener('click',function(){setExplode(false);go('torre');if(glOK)T3.focus(null)});
@@ -375,6 +395,8 @@ try{if(h0)history.replaceState(null,'',location.pathname+location.search)}catch(
 $('.brand').style.cursor='pointer';$('.brand').title='Volver al menú';
 $('.brand').addEventListener('click',function(){try{history.replaceState(null,'',location.pathname)}catch(e){}location.reload()});
 
+/* enlace directo (para pruebas): ?pc=3&open=1&view=gpu */
+(function(){var q=location.search,m=/[?&]pc=([0-9])/.exec(q);if(m&&/[?&]open=1/.test(q)){applyPC(+m[1]);var v=/[?&]view=([a-z]+)/.exec(q);openTower(v?v[1]:'torre',true);if(/[?&]explode=1/.test(q))setExplode(true)}})();
 /* ---------- divisor: el usuario ajusta cuánto ocupa la torre frente al texto ---------- */
 (function(){
   var stage=$('.stage'),cell=$('#towerCell'),pnl=$('#panel'),KEY='estacion-split',DEF=.56,share=DEF;

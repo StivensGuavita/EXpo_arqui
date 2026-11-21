@@ -1,29 +1,28 @@
-/* Precios de referencia. Se pueden cambiar desde la página (vista "Precios") o editando este archivo.
-   - Amazon: precio de referencia en USD (amazon.com). La página lo convierte a pesos con la TRM
-     y le suma el recargo de importación (envío, IVA y trámite del courier).
-   - Local: precio en pesos colombianos de la tienda de tu ciudad. Está vacío (null) a propósito:
-     se llena escribiendo en la vista "Precios" y queda guardado en este navegador.
-   Los valores de Amazon son estimados que hay que verificar con el botón "Buscar en Amazon". */
+/* Precios de referencia (PC 2). Se pueden cambiar desde la página (vista "Precios") o editando este archivo.
+   - Amazon: precio de amazon.com mostrado en pesos colombianos con entrega a Colombia (noviembre 2026).
+     Se guarda como US$ = pesos / TRM, y la página lo vuelve a convertir a pesos con la TRM.
+     Los valores marcados como estimados en el informe no aparecieron en Amazon.
+   - Local: precio en pesos colombianos (Tauret Computadores y Falabella; algunos son estimados). null = sin dato. */
 window.PRICES_DEFAULT = {
-  tienda: 'Tienda local',
-  trm: 4100,        // pesos por dólar (cámbiala por la TRM del día)
-  recargo: 30,      // % de recargo de importación sobre el precio en dólares
+  tienda: 'Tauret / Falabella',
+  trm: 3309.55,     // pesos por dólar (TRM)
+  recargo: 0,         // % de recargo de importación (los precios de Amazon ya vienen en pesos con entrega a Colombia)
   amazonUSD: {
-    cpu:            [230, 330, 550],
-    gpu:            [300, 430, 2300],
-    ram:            [90, 170, 340],
-    almacenamiento: [50, 200, 450],
-    placa:          [100, 180, 450],
-    fuente:         [60, 110, 220],
-    refrigeracion:  [30, 45, 140]
+    cpu: [180.36, 268.47, 558.72],
+    gpu: [518.28, 860.36, 8082.67],
+    ram: [259.14, 508.94, 1036.58],
+    almacenamiento: [72.24, 323.96, 715.2],
+    placa: [82.92, 88.1, 237.38],
+    fuente: [51.82, 51.82, 248.77],
+    refrigeracion: [18.55, 32.26, 72.45]
   },
   localCOP: {
-    cpu:            [null, null, null],
-    gpu:            [null, null, null],
-    ram:            [null, null, null],
-    almacenamiento: [null, null, null],
-    placa:          [null, null, null],
-    fuente:         [null, null, null],
-    refrigeracion:  [null, null, null]
+    cpu: [1050000, 1420000, 2470000],
+    gpu: [2150000, 3619000, 34000000],
+    ram: [919000, 2599000, 4999000],
+    almacenamiento: [299900, 1494900, null],
+    placa: [439000, 399000, 1218000],
+    fuente: [199000, 389000, 599000],
+    refrigeracion: [125000, 250000, 515000]
   }
 };
