@@ -84,7 +84,7 @@ var ORDER=PARTS.map(function(p){return p.id});
 var SEQ=['torre'].concat(ORDER,['resumen','precios']);
 var sel={};ORDER.forEach(function(id){sel[id]=1});
 var view='intro',opened=false,SRC='amazon';
-var PC2={id:2,brand:'Estación de Mapeo',company:'',noteTotal:'incluye chasis; sin monitor ni licencias',limLabel:'Proyecto cómodo',lim:null,extras:[{n:'Chasis ATX con flujo de aire',model:'Corsair 4000D RS ARGB Frame (torre ATX con frente de malla)',usd:93.28,cop:410000}],loads:null,parts:PARTS,prices:window.PRICES_DEFAULT,labels3d:null};
+var PC2={id:2,monitor3d:{inch:27,kind:'map',logo:'ProArt'},brand:'Estación de Mapeo',company:'',noteTotal:'incluye chasis y monitor; sin licencias',limLabel:'Proyecto cómodo',lim:null,extras:[{n:'Chasis ATX con flujo de aire',model:'Corsair 4000D RS ARGB Frame (torre ATX con frente de malla)',usd:93.28,cop:410000},{n:'Monitor 27" QHD calibrado',model:'ASUS ProArt PA278QV 27 pulgadas 2560 × 1440 IPS, 100 % sRGB',usd:229.03,cop:1189000}],loads:null,parts:PARTS,prices:window.PRICES_DEFAULT,labels3d:null};
 var PC=PC2,PKEY='estacion-precios-v3',OLDKEY='estacion-precios-old';
 
 /* ---------- precios (Amazon y tienda local) ---------- */
@@ -333,7 +333,7 @@ function applyPC(n){
   sel={};ORDER.forEach(function(id){sel[id]=1});
   var b=$('.brand');if(b&&b.lastChild)b.lastChild.textContent=PC.brand;
   document.title=PC.brand+(PC.company?' · '+PC.company:'');
-  if(glOK){T3.setPC(PC.labels3d);PARTS.forEach(function(p){T3.setLabel(p.id,p.n,tierOf(p.id).model)})}
+  if(glOK){T3.setPC(PC.labels3d);if(T3.setMonitor)T3.setMonitor(PC.monitor3d||null);PARTS.forEach(function(p){T3.setLabel(p.id,p.n,tierOf(p.id).model)})}
 }
 /* ---------- navegación ---------- */
 var chips=$('#chips');

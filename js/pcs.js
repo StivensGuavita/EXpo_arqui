@@ -6,13 +6,15 @@ window.PC3 = {
   id: 3,
   brand: 'Estación de Desarrollo',
   company: 'Llanero Games Studio S.A.S',
-  noteTotal: 'incluye chasis; sin monitor ni licencias',
+  noteTotal: 'incluye chasis y monitor; sin licencias',
+  monitor3d: { inch: 27, kind: 'game', logo: 'UltraGear' },
   limLabel: 'Juegos que mueve cómodo',
   lim: function (t) {
     var v = Math.min(t('ram').m[0], t('gpu').m[0]);
     return v <= 35 ? 'Prototipos y juegos pequeños' : v <= 70 ? 'Juegos medianos' : 'Juegos grandes y escenas pesadas';
   },
-  extras: [{ n: 'Chasis ATX con flujo de aire', model: 'Torre ATX con flujo de aire y radiador de 360 mm (Corsair Frame 5000D RS o equivalente)', usd: 195.92, cop: 410000 }],
+  extras: [{ n: 'Chasis ATX con flujo de aire', model: 'Torre ATX con flujo de aire y radiador de 360 mm (Corsair Frame 5000D RS o equivalente)', usd: 195.92, cop: 410000 },
+    { n: 'Monitor 27" QHD 200 Hz', model: 'LG UltraGear 27G610A 27 pulgadas 2560 × 1440 IPS, 200 Hz', usd: 169.99, cop: 999900 }],
   prices: {
     tienda: 'Tauret / Falabella',
     trm: 3309.55,

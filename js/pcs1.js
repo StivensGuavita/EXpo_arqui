@@ -11,6 +11,7 @@ window.PC1 = {
     var v = Math.min(t('ram').m[0], t('cpu').m[0]);
     return v <= 35 ? 'Tareas básicas de recepción' : v <= 70 ? 'Recepción, reservas y facturación' : 'Administración con varios programas a la vez';
   },
+  monitor3d: { inch: 22, kind: 'hotel', logo: 'MSI' },
   extras: [
     { n: 'Chasis Micro ATX', model: 'Zalman CUBIX-G Micro ATX', usd: 46.63, cop: 189000 },
     { n: 'Monitor 22" Full HD', model: 'MSI PRO MP225 22 pulgadas Full HD', usd: 62.18, cop: 0 }

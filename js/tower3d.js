@@ -588,6 +588,7 @@ function init(el,hk){
     if(pendingLabels[id])setLabel(id,pendingLabels[id][0],pendingLabels[id][1]);
   });
   ready=true;
+  if(monCfg)setMonitor(monCfg);
   dust=makeDust();scene.add(dust);litDirty=true;
   canvas.style.transition='opacity 1.4s ease';canvas.style.opacity=1;
   }
@@ -659,6 +660,8 @@ function goal(){
     d=fitDist(focusId==='almacenamiento'&&!(LBL&&LBL.noSata)?11:Math.max(p.R,9),1.4);
   }else if(exploded){
     dir=v3(.35,.16,1).normalize();tgt=v3(0,10,10);d=fitDist(66,1.08);
+  }else if(monCfg){
+    var mr=28.7+61.4*monCfg.inch/27;dir=v3(.3,.16,.95).normalize();tgt=v3((mr-23.7)/2+7,-1,-4);d=fitDist((mr+23.7)/2+9,1.0);
   }else{
     dir=v3(.4,.14,.95).normalize();tgt=v3(0,-1,0);d=fitDist(31,1.0);
   }
@@ -668,6 +671,160 @@ function fly(ms){
   var off=camera.position.clone().sub(controls.target);
   tw={t0:performance.now(),ms:reduce?1:ms,fromT:controls.target.clone(),fromD:off.length(),fromDir:off.normalize()};
   controls.enabled=false}
+
+/* ---------- monitor (se arma con código, sin modelos externos) ----------
+   cfg: {inch:27|22, kind:'map'|'hotel', logo:'ProArt', res:'2560 × 1440'}. Se ubica a la derecha de la torre. */
+var monCfg=null,monGroup=null,monMats=[],monK=0;
+function mapScreen(g,w,h){
+  var r=rng(7);
+  g.fillStyle='#16191d';g.fillRect(0,0,w,h);
+  // barra superior
+  g.fillStyle='#22262c';g.fillRect(0,0,w,46);
+  ['#ff5f57','#febc2e','#28c840'].forEach(function(c,i){g.fillStyle=c;g.beginPath();g.arc(22+i*22,23,7,0,7);g.fill()});
+  txt(g,'Mapeo · Finca La Esperanza (Meta) · Ortomosaico + nube de puntos',100,23,'600 19px Segoe UI, Arial','#c9d1d9');
+  ['Vuelo','Procesar','Clasificar','Exportar'].forEach(function(s,i){g.fillStyle=i===1?'#d9480f':'#2d333b';g.fillRect(w-520+i*128,9,118,28);txt(g,s,w-461+i*128,23,'600 15px Segoe UI, Arial','#fff','center')});
+  // panel de capas
+  var sx=280;g.fillStyle='#1c2025';g.fillRect(0,46,sx,h-82);
+  txt(g,'CAPAS',20,76,'700 14px Segoe UI, Arial','#7d8590');
+  var layers=[['Ortomosaico RGB','#3fb950'],['Modelo digital (DSM)','#d29922'],['Nube de puntos LAS','#58a6ff'],['Curvas de nivel 1 m','#f0f6fc'],['Plan de vuelo DJI','#d9480f'],['Lotes de cultivo','#a371f7'],['Zonas de fumigación','#f778ba']];
+  layers.forEach(function(L,i){var y=108+i*40;g.fillStyle=i===2?'#2d333b':'transparent';g.fillRect(8,y-17,sx-16,34);
+    g.strokeStyle='#8b949e';g.lineWidth=2;g.strokeRect(20,y-8,16,16);g.fillStyle=L[1];g.fillRect(23,y-5,10,10);txt(g,L[0],48,y,'16px Segoe UI, Arial','#c9d1d9')});
+  txt(g,'PROCESO',20,410,'700 14px Segoe UI, Arial','#7d8590');
+  [['Alinear fotos',1],['Nube densa',1],['Malla 3D',.72],['Ortomosaico',0]].forEach(function(s,i){var y=444+i*48;txt(g,s[0],20,y,'15px Segoe UI, Arial','#c9d1d9');
+    g.fillStyle='#30363d';g.fillRect(20,y+14,sx-40,8);g.fillStyle=s[1]>=1?'#3fb950':'#d9480f';g.fillRect(20,y+14,(sx-40)*s[1],8)});
+  // mapa: lotes de cultivo
+  var mx=sx,my=46,mw=w-sx-420,mh=h-82;
+  g.save();g.beginPath();g.rect(mx,my,mw,mh);g.clip();
+  g.fillStyle='#4b5a2e';g.fillRect(mx,my,mw,mh);
+  var cols=['#5f7a33','#7a8b3a','#8a7a45','#4e6b2c','#6d8f3c','#9a8a52','#567d36','#3f5f2a'];
+  for(var i=0;i<7;i++)for(var j=0;j<6;j++){var x0=mx+i*mw/7+(r()-.5)*20,y0=my+j*mh/6+(r()-.5)*20;
+    g.fillStyle=cols[Math.floor(r()*cols.length)];g.beginPath();g.moveTo(x0,y0);g.lineTo(x0+mw/7+r()*14,y0+(r()-.5)*16);g.lineTo(x0+mw/7+(r()-.5)*16,y0+mh/6+r()*14);g.lineTo(x0+(r()-.5)*14,y0+mh/6);g.closePath();g.fill();
+    g.strokeStyle='rgba(255,255,255,.06)';g.lineWidth=1;for(var k=0;k<14;k++){g.beginPath();g.moveTo(x0+k*mw/98,y0);g.lineTo(x0+k*mw/98+8,y0+mh/6);g.stroke()}}
+  // río y vía
+  g.strokeStyle='#2f6f8f';g.lineWidth=16;g.beginPath();g.moveTo(mx,my+mh*.78);g.bezierCurveTo(mx+mw*.3,my+mh*.55,mx+mw*.55,my+mh*.98,mx+mw,my+mh*.7);g.stroke();
+  g.strokeStyle='#c2b59b';g.lineWidth=7;g.beginPath();g.moveTo(mx+mw*.12,my);g.lineTo(mx+mw*.25,my+mh);g.stroke();
+  // curvas de nivel
+  g.strokeStyle='rgba(240,246,252,.35)';g.lineWidth=1.3;
+  for(var c=0;c<9;c++){g.beginPath();for(var a=0;a<=64;a++){var t=a/64*Math.PI*2,rr=40+c*34+Math.sin(t*3+c)*12;var x=mx+mw*.62+Math.cos(t)*rr*1.3,y=my+mh*.38+Math.sin(t)*rr*.8;a?g.lineTo(x,y):g.moveTo(x,y)}g.stroke()}
+  // plan de vuelo (líneas en zigzag) y puntos de paso
+  var fx=mx+mw*.35,fy=my+mh*.12,fw=mw*.5,fh=mh*.56;g.fillStyle='rgba(217,72,15,.12)';g.fillRect(fx,fy,fw,fh);
+  g.strokeStyle='#ff7b3a';g.lineWidth=3;g.beginPath();for(var s=0;s<=10;s++){var X=fx+s*fw/10;if(s%2){g.lineTo(X,fy+fh);g.lineTo(X,fy)}else{g.lineTo(X,fy);g.lineTo(X,fy+fh)}}g.stroke();
+  for(s=0;s<=10;s++){g.fillStyle='#fff';g.beginPath();g.arc(fx+s*fw/10,s%2?fy:fy+fh,5,0,7);g.fill()}
+  g.fillStyle='#ff7b3a';g.beginPath();g.moveTo(fx+fw*.6,fy+fh*.4);g.lineTo(fx+fw*.6+16,fy+fh*.4+26);g.lineTo(fx+fw*.6-16,fy+fh*.4+26);g.fill();
+  // zona de fumigación
+  g.strokeStyle='#f778ba';g.setLineDash([10,7]);g.lineWidth=3;g.strokeRect(mx+mw*.05,my+mh*.08,mw*.24,mh*.3);g.setLineDash([]);
+  g.restore();
+  // escala y norte
+  g.fillStyle='rgba(0,0,0,.55)';g.fillRect(mx+16,my+mh-56,190,40);g.fillStyle='#fff';g.fillRect(mx+30,my+mh-30,120,5);txt(g,'100 m',mx+160,my+mh-28,'14px Segoe UI, Arial','#fff');
+  // vista 3D de la nube de puntos
+  var px=w-420,pw=420;g.fillStyle='#0d1117';g.fillRect(px,46,pw,h-82);
+  txt(g,'NUBE DE PUNTOS · 3D',px+20,76,'700 14px Segoe UI, Arial','#7d8590');
+  for(i=0;i<9000;i++){var u=r()*2-1,v=r()*2-1,hgt=Math.sin(u*3)*Math.cos(v*2.4)*.5+.5+(r()-.5)*.08;
+    var X2=px+pw/2+(u-v)*170,Y2=46+(h-82)*.5+(u+v)*60-hgt*120;
+    var col=hgt<.33?[47,129,247]:hgt<.66?[63,185,80]:[248,81,73];g.fillStyle='rgba('+col[0]+','+col[1]+','+col[2]+',.85)';g.fillRect(X2,Y2,2,2)}
+  for(i=0;i<3;i++){var bx=px+40+i*120;g.fillStyle='#161b22';g.fillRect(bx,h-150,108,70);txt(g,['186,4 M','2.431','2,1 cm'][i],bx+54,h-125,'700 20px Segoe UI, Arial','#f0f6fc','center');txt(g,['puntos','fotos','por píxel'][i],bx+54,h-98,'13px Segoe UI, Arial','#7d8590','center')}
+  // barra de estado
+  g.fillStyle='#22262c';g.fillRect(0,h-36,w,36);
+  txt(g,'GPU RTX 5060 Ti · CUDA activo  ·  VRAM 11,2 / 16 GB  ·  RAM 24 / 32 GB  ·  EPSG:3116 MAGNA-SIRGAS',18,h-18,'15px Segoe UI, Arial','#8b949e');
+  txt(g,'4.13° N  73.63° O',w-18,h-18,'15px Segoe UI, Arial','#8b949e','right');
+}
+function hotelScreen(g,w,h){
+  g.fillStyle='#f4f6f8';g.fillRect(0,0,w,h);
+  g.fillStyle='#0b7f73';g.fillRect(0,0,w,58);txt(g,'Hotel · Recepción y reservas',24,29,'700 24px Segoe UI, Arial','#fff');
+  txt(g,'Noviembre 2026',w-24,29,'600 19px Segoe UI, Arial','#e6fffa','right');
+  var sx=220,days=14,cw=(w-sx-20)/days,rows=14,rh=(h-150)/rows;
+  for(var d=0;d<days;d++){txt(g,String(16+d),sx+d*cw+cw/2,82,'600 15px Segoe UI, Arial','#57606a','center')}
+  var r=rng(3),cols=['#2da44e','#0969da','#bf8700','#8250df','#cf222e'];
+  for(var i=0;i<rows;i++){var y=100+i*rh;g.fillStyle=i%2?'#fff':'#eef1f4';g.fillRect(0,y,w,rh);
+    txt(g,'Habitación '+(101+i),20,y+rh/2,'16px Segoe UI, Arial','#24292f');
+    var d0=0;while(d0<days){d0+=Math.floor(r()*3);var len=1+Math.floor(r()*4);if(d0>=days)break;
+      g.fillStyle=cols[Math.floor(r()*cols.length)];g.fillRect(sx+d0*cw+3,y+5,Math.min(len,days-d0)*cw-6,rh-10);d0+=len}}
+  g.fillStyle='#24292f';g.fillRect(0,h-40,w,40);txt(g,'Ocupación 78 %  ·  12 llegadas hoy  ·  Factura electrónica DIAN: en línea',20,h-20,'15px Segoe UI, Arial','#c9d1d9');
+}
+function gameScreen(g,w,h){
+  var r=rng(11);
+  g.fillStyle='#151515';g.fillRect(0,0,w,h);
+  // barra superior del editor
+  g.fillStyle='#1f1f1f';g.fillRect(0,0,w,44);
+  txt(g,'Llanero Games · Proyecto "Leyendas del Llano" · Nivel_Sabana',18,22,'600 18px Segoe UI, Arial','#d0d0d0');
+  ['Compilar','Jugar','Empaquetar'].forEach(function(s,i){g.fillStyle=i===1?'#2e9e4f':'#333';g.fillRect(w-420+i*136,8,126,28);txt(g,(i===1?'▶ ':'')+s,w-357+i*136,22,'600 15px Segoe UI, Arial','#fff','center')});
+  var lx=250,rx=w-300,top=44,bot=h-230;
+  // vista del juego: atardecer llanero
+  var vw=rx-lx,vh=bot-top;g.save();g.beginPath();g.rect(lx,top,vw,vh);g.clip();
+  var sky=g.createLinearGradient(0,top,0,top+vh*.62);sky.addColorStop(0,'#2b3a6b');sky.addColorStop(.55,'#e0734a');sky.addColorStop(1,'#f6c46a');
+  g.fillStyle=sky;g.fillRect(lx,top,vw,vh);
+  g.fillStyle='#ffe3a1';g.beginPath();g.arc(lx+vw*.68,top+vh*.56,44,0,7);g.fill();
+  var gr=g.createLinearGradient(0,top+vh*.6,0,top+vh);gr.addColorStop(0,'#5c6b2d');gr.addColorStop(1,'#2c3a18');
+  g.fillStyle=gr;g.fillRect(lx,top+vh*.6,vw,vh*.4);
+  // río y palmas (morichales)
+  g.fillStyle='#e9a25a';g.beginPath();g.moveTo(lx+vw*.2,top+vh);g.quadraticCurveTo(lx+vw*.45,top+vh*.7,lx+vw*.62,top+vh*.62);g.lineTo(lx+vw*.66,top+vh*.62);g.quadraticCurveTo(lx+vw*.52,top+vh*.75,lx+vw*.42,top+vh);g.fill();
+  for(var i=0;i<9;i++){var px=lx+r()*vw,py=top+vh*(.6+r()*.04),ph=60+r()*90;g.strokeStyle='#1b2410';g.lineWidth=5;g.beginPath();g.moveTo(px,py);g.quadraticCurveTo(px+8,py-ph/2,px+3,py-ph);g.stroke();
+    g.fillStyle='#1b2410';for(var k=0;k<7;k++){var a=k/7*Math.PI*2;g.beginPath();g.ellipse(px+3+Math.cos(a)*20,py-ph+Math.sin(a)*8,22,5,a,0,7);g.fill()}}
+  // personaje (jinete) en silueta
+  g.fillStyle='#120d08';g.beginPath();g.ellipse(lx+vw*.35,top+vh*.8,46,18,0,0,7);g.fill();g.fillRect(lx+vw*.35-40,top+vh*.8,8,40);g.fillRect(lx+vw*.35+30,top+vh*.8,8,40);
+  g.beginPath();g.arc(lx+vw*.35-8,top+vh*.8-44,12,0,7);g.fill();g.fillRect(lx+vw*.35-16,top+vh*.8-34,16,30);
+  g.restore();
+  // gizmo, FPS y estadísticas
+  g.strokeStyle='#e04040';g.lineWidth=4;g.beginPath();g.moveTo(lx+vw*.35,top+vh*.78);g.lineTo(lx+vw*.35+70,top+vh*.78);g.stroke();
+  g.strokeStyle='#40c040';g.beginPath();g.moveTo(lx+vw*.35,top+vh*.78);g.lineTo(lx+vw*.35,top+vh*.78-70);g.stroke();
+  g.strokeStyle='#4080ff';g.beginPath();g.moveTo(lx+vw*.35,top+vh*.78);g.lineTo(lx+vw*.35-45,top+vh*.78+40);g.stroke();
+  g.fillStyle='rgba(0,0,0,.55)';g.fillRect(lx+12,top+12,300,96);
+  txt(g,'200 FPS  ·  5,0 ms',lx+26,top+36,'700 22px Consolas, monospace','#7CFC7C');
+  txt(g,'Ray tracing: activado  ·  DLSS 4',lx+26,top+66,'15px Consolas, monospace','#ddd');
+  txt(g,'VRAM 10,8 / 16 GB',lx+26,top+90,'15px Consolas, monospace','#ddd');
+  // paneles laterales
+  g.fillStyle='#1b1b1b';g.fillRect(0,top,lx,h-top);g.fillRect(rx,top,w-rx,h-top);
+  txt(g,'ESCENA',16,top+26,'700 13px Segoe UI, Arial','#8a8a8a');
+  ['Cielo_Atardecer','Terreno_Sabana','Rio_Meta','Morichal_01','Morichal_02','Jinete_Jugador','Caballo_IA','Luz_Sol','PostProceso'].forEach(function(s,i){var y=top+60+i*32;
+    if(i===5){g.fillStyle='#2b4a7a';g.fillRect(6,y-14,lx-12,28)}txt(g,'▸ '+s,18,y,'15px Segoe UI, Arial','#cfcfcf')});
+  txt(g,'DETALLES',rx+16,top+26,'700 13px Segoe UI, Arial','#8a8a8a');
+  [['Posición','120 · 34 · 0'],['Rotación','0 · 0 · 90'],['Escala','1 · 1 · 1'],['Malla','SK_Jinete'],['Material','M_Poncho'],['Física','Activada']].forEach(function(p,i){var y=top+60+i*34;
+    txt(g,p[0],rx+16,y,'15px Segoe UI, Arial','#9a9a9a');g.fillStyle='#262626';g.fillRect(rx+120,y-13,w-rx-136,26);txt(g,p[1],rx+128,y,'14px Segoe UI, Arial','#e0e0e0')});
+  // explorador de contenido
+  g.fillStyle='#202020';g.fillRect(lx,bot,rx-lx,h-bot);txt(g,'CONTENIDO',lx+16,bot+22,'700 13px Segoe UI, Arial','#8a8a8a');
+  var cols=['#7a5c3a','#3f6b2c','#2f5f8f','#8f4a2f','#6b6b6b','#a07a2a','#4a3f7a'];
+  for(i=0;i<7;i++){var bx=lx+16+i*((rx-lx-32)/7);g.fillStyle=cols[i];g.fillRect(bx,bot+44,(rx-lx-32)/7-14,110);
+    txt(g,['T_Barro','T_Pasto','T_Agua','SK_Toro','M_Metal','T_Arena','FX_Polvo'][i],bx+((rx-lx-32)/7-14)/2,bot+172,'13px Segoe UI, Arial','#bbb','center')}
+  g.fillStyle='#111';g.fillRect(0,h-34,w,34);
+  txt(g,'Compilando shaders: 1.284 / 1.284  ✓   ·   Ryzen 9 9900X 24 hilos   ·   RTX 5070 Ti',16,h-17,'14px Consolas, monospace','#9be29b');
+}
+function buildMonitor(cfg){
+  curMats=monMats=[];
+  var s=cfg.inch/27,W=61.4*s,H=36.4*s,g=new T.Group(),p=new T.Group();g.add(p);
+  var shell=M({color:0x141619,roughness:.62,metalness:.15,envMapIntensity:.5}),dark=M({color:0x0b0c0e,roughness:.7,metalness:.2}),
+      steel=M({color:0x1e2125,roughness:.45,metalness:.7,bumpMap:brushTex(),bumpScale:.2,envMapIntensity:.45});
+  var add=function(o,par){(par||g).add(o);return o};
+  // panel: marco frontal, parte trasera abultada y pantalla
+  add(mesh(bb(W,H,1.3,.28),shell,0,0,0),p);
+  add(mesh(bb(W*.72,H*.7,3.4,1.1),shell,0,-H*.05,-1.9),p);
+  var sw=W-1.6,sh=H-.8-2.1*s,scr=tex(1600,Math.round(1600*sh/sw),cfg.kind==='hotel'?hotelScreen:cfg.kind==='game'?gameScreen:mapScreen);
+  var sm=M({color:0x050607,emissive:0xffffff,emissiveMap:scr,emissiveIntensity:cfg.kind==='hotel'?.62:.95,roughness:.32,metalness:0});
+  add(mesh(new T.PlaneGeometry(sw,sh),sm,0,H/2-.8-sh/2,.66),p).userData.noAO=true;
+  // logo en el borde inferior y LED de encendido
+  var lg=tex(512,64,function(c,w,h){c.clearRect(0,0,w,h);txt(c,cfg.logo||'',w/2,h/2,'600 40px Segoe UI, Arial','rgba(200,205,212,.85)','center')});
+  var lgm=new T.MeshBasicMaterial({map:lg,transparent:true,depthWrite:false});monMats.push(lgm);add(mesh(new T.PlaneGeometry(8*s,1),lgm,0,-H/2+1.05*s,.66),p);
+  add(mesh(box(.35,.18,.1),LED(0xffffff,1.2),W/2-3,-H/2+.5,.66),p);
+  // soporte: columna con ajuste de altura, cuello y base rectangular
+  var baseY=-25.9,bottom=baseY+(cfg.inch>=27?11.5:9.5);
+  p.position.set(0,bottom+H/2,0);
+  var colH=(bottom+H*.45)-(baseY+1.2);
+  add(mesh(bb(6.6,colH,2.4,.5),steel,0,baseY+1.2+colH/2,-5.2));
+  add(mesh(bb(9,5,1.6,.5),dark,0,bottom+H*.45-2.5,-3.9));
+  add(mesh(bb(25*s+2,1.1,19*s+1,.45),steel,0,baseY+.55,-3.5));
+  add(mesh(bb(5,.4,5,.2),dark,0,baseY+1.25,-5.2));
+  g.traverse(function(o){if(o.isMesh){o.castShadow=true;o.receiveShadow=true}});
+  g.position.set(23.7+5+W/2,0,-5);g.rotation.y=-.08;
+  monMats.forEach(function(m){m.userData.o=m.opacity;m.userData.t=m.transparent;m.transparent=true;m.opacity=0});
+  return g}
+function setMonitor(cfg){
+  monCfg=cfg||null;if(!ready)return;
+  if(monGroup){scene.remove(monGroup);monGroup=null;monK=0}
+  if(monCfg){monGroup=buildMonitor(monCfg);monGroup.visible=false;scene.add(monGroup)}}
+function updateMonitor(dt){
+  if(!monGroup)return;var want=opened&&!exploded&&!focusId?1:0;
+  monK+=(want-monK)*(1-Math.exp(-dt*4));monGroup.visible=monK>.01;
+  var op=monK<.995;monMats.forEach(function(m){m.transparent=op||m.userData.t;m.opacity=(m.userData.o||1)*(op?monK:1);m.depthWrite=!op||monK>.6});
+  monGroup.position.y=(1-monK)*-3}
 
 /* ---------- API ---------- */
 API.init=init;
@@ -680,6 +837,7 @@ API.setPC=function(lb){
   LBL=lb||null;
   if(!ready)return;
   ORDER.forEach(function(id){buildPart(id)});litDirty=true};
+API.setMonitor=function(c){var was=!!monCfg;setMonitor(c);if(was!==!!monCfg&&opened)fly(900)};
 API.nudge=function(a){nudgeT=a||0};
 API.wake=function(on){if(!opened)powerT=on?.75:.3};
 API.setTier=function(id,i,model){
@@ -693,7 +851,7 @@ function setLabel(id,name,model){var m=meta[id];if(!m){var p=pendingLabels[id]||
   m.el.querySelector('b').textContent=m.name||id;m.el.querySelector('small').textContent=m.model||''}
 API.pulse=function(id){if(parts[id])parts[id].pulse=1};
 API.isOpen=function(){return opened};
-API.debug=function(){return JSON.stringify({cam:camera.position.toArray().map(Math.round),tgt:controls.target.toArray().map(Math.round),asp:camera.aspect,ready:ready,opened:opened,tw:!!tw,um:userMoved,reg:reg,fov:camera.fov,view:camera.view&&camera.view.enabled,nodes:glb?glb.children.length:-1})};
+API.debug=function(){return JSON.stringify({monK:monK,monN:monMats.length,monOp:monMats.map(function(m){return +m.opacity.toFixed(2)+(m.transparent?"t":"")}).join(","),cam:camera.position.toArray().map(Math.round),tgt:controls.target.toArray().map(Math.round),asp:camera.aspect,ready:ready,opened:opened,tw:!!tw,um:userMoved,reg:reg,fov:camera.fov,view:camera.view&&camera.view.enabled,nodes:glb?glb.children.length:-1})};
 
 function labelState(id){
   if(!opened)return 'hidden';
@@ -744,6 +902,7 @@ function loop(){
   var dimCase=(exploded?.8:focusId?.7:0);
   caseMats.forEach(function(m){var d=m._dim||0;d+=(dimCase-d)*k;m._dim=d;var base=m.userData.o;
     if(d>.01){m.transparent=true;m.opacity=base*(1-d*.82);m.depthWrite=d<.5&&m.userData.w}else{m.transparent=m.userData.t;m.opacity=base;m.depthWrite=m.userData.w}});
+  updateMonitor(dt);
   ORDER.forEach(function(id){
     var p=parts[id],pose=targetPose(id),tp=pose.p,tr=pose.r;
     p.pos.x+=(tp[0]-p.pos.x)*k;p.pos.y+=(tp[1]-p.pos.y)*k;p.pos.z+=(tp[2]-p.pos.z)*k;
