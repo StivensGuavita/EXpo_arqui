@@ -7,12 +7,13 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@500;600&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/style.css?v=84">
+<link rel="stylesheet" href="css/style.css?v=86">
 </head>
 <body>
 <div class="app">
   <header class="top">
     <div class="brand"><span class="mark" aria-hidden="true"></span>Estación de Mapeo</div>
+    <div class="owner" id="owner" hidden></div>
     <nav class="chips" id="chips" aria-label="Componentes"></nav>
   </header>
 
@@ -22,9 +23,9 @@
     <section class="intro">
       <div class="intro-in">
         <nav class="pcs" aria-label="Equipos">
-          <button class="pcbtn" type="button" data-pc="1"><span class="pcn">PC 1</span><span class="pca" aria-hidden="true">→</span></button>
-          <button class="pcbtn" type="button" data-pc="2" id="open"><span class="pcn">PC 2</span><span class="pca" aria-hidden="true">→</span></button>
-          <button class="pcbtn" type="button" data-pc="3"><span class="pcn">PC 3</span><span class="pca" aria-hidden="true">→</span></button>
+          <button class="pcbtn" type="button" data-pc="1"><span class="av" data-i="FV"><img src="img/equipo/pc1.jpg" alt="" onerror="this.remove()"></span><span class="pct"><span class="pcn">PC 1</span><span class="pcw"><span class="pfull">Fabián Guillermo Vázquez Vázquez</span><span class="pfirst">Fabián</span></span><span class="pco">Hotel</span></span><span class="pca" aria-hidden="true">→</span></button>
+          <button class="pcbtn" type="button" data-pc="2" id="open"><span class="av" data-i="GG"><img src="img/equipo/pc2.jpg" alt="" onerror="this.remove()"></span><span class="pct"><span class="pcn">PC 2</span><span class="pcw"><span class="pfull">Gesman Stivens Guavita Monzón</span><span class="pfirst">Gesman</span></span><span class="pco">ACRE · drones</span></span><span class="pca" aria-hidden="true">→</span></button>
+          <button class="pcbtn" type="button" data-pc="3"><span class="av" data-i="KS"><img src="img/equipo/pc3.jpg" alt="" onerror="this.remove()"></span><span class="pct"><span class="pcn">PC 3</span><span class="pcw"><span class="pfull">Kevin Santiago Sandoval Gómez</span><span class="pfirst">Kevin</span></span><span class="pco">Llanero Games</span></span><span class="pca" aria-hidden="true">→</span></button>
         </nav>
         <p class="pcnote" id="pcnote" role="status"></p>
       </div>
@@ -45,18 +46,18 @@
 </div>
 <div id="tip" role="tooltip"></div>
 
-<script src="libs/three.min.js?v=84"></script>
-<script src="libs/OrbitControls.js?v=84"></script>
-<script src="libs/RGBELoader.js?v=84"></script>
-<script src="libs/Reflector.js?v=84"></script>
-<script src="libs/post.js?v=84"></script>
-<script src="libs/env-hdr.js?v=84"></script>
-<script src="libs/GLTFLoader.js?v=84"></script>
-<script src="libs/pc-model.js?v=84"></script>
-<script src="js/tower3d.js?v=84"></script>
-<script src="js/pcs.js?v=84"></script>
-<script src="js/pcs1.js?v=84"></script>
-<script src="js/prices.js?v=84"></script>
-<script src="js/app.js?v=84"></script>
+<script src="libs/three.min.js?v=86"></script>
+<script src="libs/OrbitControls.js?v=86"></script>
+<script src="libs/RGBELoader.js?v=86"></script>
+<script src="libs/Reflector.js?v=86"></script>
+<script src="libs/post.js?v=86"></script>
+<script src="libs/env-hdr.js?v=86"></script>
+<script src="libs/GLTFLoader.js?v=86"></script>
+<script src="libs/pc-model.js?v=86"></script>
+<script src="js/tower3d.js?v=86"></script>
+<script src="js/pcs.js?v=86"></script>
+<script src="js/pcs1.js?v=86"></script>
+<script src="js/prices.js?v=86"></script>
+<script src="js/app.js?v=86"></script>
 </body>
 </html>

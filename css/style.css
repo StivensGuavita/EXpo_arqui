@@ -350,3 +350,34 @@ body.open .split{display:block}
   .stage{min-height:0}
   body:not(.open) .tower-cell{height:62vh;min-height:340px}
 }
+
+/* ---------- integrantes: foto y nombre en cada equipo ---------- */
+.av{position:relative;flex:none;display:grid;place-items:center;width:52px;height:52px;border-radius:50%;overflow:hidden;
+  background:linear-gradient(135deg,var(--accent),#7a2a08);color:#fff;font:700 17px var(--font-d);letter-spacing:.02em;
+  box-shadow:0 0 0 2px var(--surface),0 0 0 3px var(--line)}
+.av::before{content:attr(data-i)}
+.av img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.pcs{width:min(400px,100%)}
+.pcbtn{justify-content:flex-start;gap:16px;padding:16px 20px}
+.pct{display:flex;flex-direction:column;gap:5px;min-width:0;flex:1}
+.pcw{font:600 13.5px/1.25 var(--font-b,Inter),sans-serif;letter-spacing:0;opacity:.92}
+.pfirst{display:none}
+.pco{font:500 11px var(--font-m);letter-spacing:.04em;text-transform:uppercase;opacity:.65}
+.pcbtn#open .av{box-shadow:0 0 0 2px var(--accent),0 0 0 3px rgba(255,255,255,.6)}
+.pcbtn#open .av{background:linear-gradient(135deg,#1c2229,#0d1115)}
+.owner{display:flex;align-items:center;gap:9px;padding:4px 12px 4px 4px;border:1px solid var(--line);border-radius:999px;background:var(--surface);white-space:nowrap}
+.owner .av{width:30px;height:30px;font-size:11px;box-shadow:none}
+.owner .own{display:flex;flex-direction:column;font:600 12.5px/1.15 var(--font-b,Inter),sans-serif;color:var(--ink)}
+.owner .own small{font:500 9.5px var(--font-m);letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+@media (max-width:899px){
+  .pcbtn{flex-direction:column;align-items:center;justify-content:center;gap:8px;padding:12px 6px;text-align:center}
+  .pcbtn .av{width:44px;height:44px;font-size:14px}
+  .pct{align-items:center;gap:3px}
+  .pfull,.pco{display:none}.pfirst{display:inline}
+  .owner .own{display:none}.owner{padding:3px}
+}
+.pcbtn{min-width:0}
+.pcbtn .pcn{font-size:clamp(1.35rem,2vw,1.75rem)}
+.pcw{font-size:12.5px}
+.pcbtn .av{width:46px;height:46px;font-size:15px}
+@media (max-width:899px){.pcs{grid-template-columns:repeat(3,minmax(0,1fr))}.pct{width:100%}.pfirst{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}}

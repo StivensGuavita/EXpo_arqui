@@ -326,12 +326,14 @@ function setTier(id,i){
   renderPanel(true);
 }
 
+var OWNERS={1:{n:"Fabián Guillermo Vázquez Vázquez",i:"FV"},2:{n:"Gesman Stivens Guavita Monzón",i:"GG"},3:{n:"Kevin Santiago Sandoval Gómez",i:"KS"}};
 function applyPC(n){
   PC=n===3?window.PC3:n===1?window.PC1:PC2;PKEY=n===2?'estacion-precios-v3':'estacion-precios-pc'+n+'-v3';OLDKEY=n===2?'estacion-precios-old':'estacion-precios-pc'+n+'-old';
   PARTS=PC.parts;byId={};PARTS.forEach(function(p){byId[p.id]=p});LOADS=PC.loads;
   PR=loadPrices(PC.prices,PKEY,OLDKEY);
   sel={};ORDER.forEach(function(id){sel[id]=1});
   var b=$('.brand');if(b&&b.lastChild)b.lastChild.textContent=PC.brand;
+  var ow=$('#owner'),o=OWNERS[n];if(ow&&o){ow.hidden=false;ow.innerHTML='<span class="av" data-i="'+o.i+'"><img src="img/equipo/pc'+n+'.jpg" alt="" onerror="this.remove()"></span><span class="own"><small>Expone</small>'+o.n+'</span>'}
   document.title=PC.brand+(PC.company?' · '+PC.company:'');
   if(glOK){T3.setPC(PC.labels3d);if(T3.setMonitor)T3.setMonitor(PC.monitor3d||null);PARTS.forEach(function(p){T3.setLabel(p.id,p.n,tierOf(p.id).model)})}
 }
